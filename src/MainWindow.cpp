@@ -44,6 +44,11 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   loadCustomPorts();
   setWindowIcon(QIcon(":/icon.png"));
+
+  // Create tray icon FIRST before setupUi because settings loading
+  // during UI setup triggers saveSettings -> updateTrayMenu
+  createTrayIcon();
+
   setupUi();
 
   m_model = new PortTableModel(this);
@@ -90,8 +95,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
   connect(m_refreshTimer, &QTimer::timeout, this,
           &MainWindow::onRefreshClicked);
   m_refreshTimer->start(5000);
-
-  createTrayIcon();
 
   onRefreshClicked();
 }
@@ -303,15 +306,8 @@ void MainWindow::setupDashboard() {
   }
   m_trackedPorts.clear();
 
-  // 1. Default Ports
-  QList<PortDef> defs = {{3000, "React / Node", "Default for web dev"},
-                         {5000, "Flask / AirPlay", "Python or Control Center"},
-                         {5432, "PostgreSQL", "Database Service"},
-                         {6379, "Redis", "Memory Cache"},
-                         {8000, "Django / Dev", "Common Dev Port"},
-                         {8080, "HTTP / Java", "Alternative Web Port"},
-                         {27017, "MongoDB", "NoSQL Database"},
-                         {9000, "PHP / API", "FastCGI / Port 9000"}};
+  // 1. Default Ports — EMPTY (user can add their own)
+  QList<PortDef> defs;
 
   // 2. Append Custom Ports
   defs.append(m_customPorts);
